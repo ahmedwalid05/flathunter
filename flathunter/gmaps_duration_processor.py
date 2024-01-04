@@ -19,12 +19,14 @@ class GMapsDurationProcessor(Processor):
 
     def process_expose(self, expose):
         """Calculate the durations for an expose"""
-        expose['durations'] = self.get_formatted_durations(expose['address']).strip()
+        expose['durations'], expose['durations_raw']= self.get_duration(expose['address'])
+         
         return expose
 
-    def get_formatted_durations(self, address):
+    def get_duration(self, address):
         """Return a formatted list of GoogleMaps durations"""
         out = ""
+        durations_raw = []
         for duration in self.config.get('durations', []):
             if 'destination' in duration and 'name' in duration:
                 dest = duration.get('destination')
@@ -34,9 +36,14 @@ class GMapsDurationProcessor(Processor):
                                        and 'key' in self.config.get('google_maps_api', {}):
                         duration = self.get_gmaps_distance(address, dest, mode['gm_id'])
                         title = mode['title']
+                        durations_raw.append({
+                            "title": title, 
+                            "name": name, 
+                            "duration": duration
+                        })
                         out += f"> {name} ({title}): {duration}\n"
 
-        return out.strip()
+        return out.strip(), durations_raw
 
     def get_gmaps_distance(self, address, dest, mode):
         """Get the distance"""
