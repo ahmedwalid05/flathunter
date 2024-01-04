@@ -48,6 +48,7 @@ class Hunter:
                                         .apply_filter(filter_set) \
                                         .resolve_addresses() \
                                         .calculate_durations() \
+                                        .add_additional_info() \
                                         .send_messages() \
                                         .build()
 

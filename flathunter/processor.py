@@ -13,6 +13,7 @@ from flathunter.sender_slack import SenderSlack
 from flathunter.sender_sqs import SenderSQS
 from flathunter.gmaps_duration_processor import GMapsDurationProcessor
 from flathunter.idmaintainer import SaveAllExposesProcessor
+from flathunter.additional_info_processor import AdditionalInfoProcessor
 from flathunter.abstract_processor import Processor
 
 class ProcessorChainBuilder:
@@ -43,6 +44,10 @@ class ProcessorChainBuilder:
         self.processors.append(AddressResolver(self.config))
         return self
 
+    def add_additional_info(self):
+        self.processors.append(AdditionalInfoProcessor(self.config))
+        return self
+        
     def calculate_durations(self):
         """Add processor to calculate durations, if enabled"""
         durations_enabled = "google_maps_api" in self.config \

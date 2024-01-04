@@ -159,6 +159,15 @@ class Crawler(ABC):
         """Returns the name of this crawler"""
         return type(self).__name__
 
+    def crawl_singular(self, url, expose):
+        if re.search(self.URL_PATTERN, url):
+            try:
+                return self.get_expose_details(expose)
+            except requests.exceptions.ConnectionError:
+                logger.warning(
+                    "Connection to %s failed. Retrying.", url.split('/')[2])
+                return expose
+        return expose
     def get_expose_details(self, expose):
         """Loads additional detalis for an expose. Should be implemented in the subclass"""
         return expose

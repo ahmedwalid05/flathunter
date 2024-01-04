@@ -163,7 +163,10 @@ class Immobilienscout(Crawler):
             'total_price':
                 str(entry.get('calculatedTotalRent', {}).get("totalRent", {}).get('value', '')),
             'size': str(entry.get("livingSpace", '')),
-            'rooms': str(entry.get("numberOfRooms", ''))
+            'rooms': str(entry.get("numberOfRooms", '')),
+            'contact_details': entry.get("contactDetails", ''),
+            'built_in_kitchen':entry.get("builtInKitchen", ''),
+            'balcony':entry.get("balcony", ''),
         }
 
     def set_cookie(self):
@@ -181,12 +184,23 @@ class Immobilienscout(Crawler):
 
     def get_expose_details(self, expose):
         """Loads additional details for an expose by processing the expose detail URL"""
-        soup = self.get_soup_from_url(expose['url'])
+        soup = self.get_soup_from_url(expose['url'], driver=self.get_driver(), checkbox=self.checkbox, afterlogin_string=self.afterlogin_string)
         date = soup.find('dd', {"class": "is24qa-bezugsfrei-ab"})
         expose['from'] = datetime.datetime.now().strftime("%2d.%2m.%Y")
         if date is not None:
             if not re.match(r'.*sofort.*', date.text):
                 expose['from'] = date.text.strip()
+                
+        extra_info = {
+            "object_description": "is24qa-objektbeschreibung",
+            "object_furnishing": "is24qa-ausstattung",
+            "location_description": "is24qa-lage"
+        }
+        for property_name in extra_info:
+            selector = extra_info[property_name]
+            extra_info_value= soup.find('pre', {"class": selector})
+            if extra_info_value is not None: 
+                expose[property_name] = extra_info_value.text
         return expose
 
     # pylint: disable=too-many-locals
