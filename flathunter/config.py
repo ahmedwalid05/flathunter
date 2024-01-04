@@ -274,6 +274,13 @@ Preis: {price}
         """Webhook for sending Slack messages"""
         return self._read_yaml_path('slack.webhook_url', "")
 
+    def sqs_details(self):
+        """AWS account details and SQS queue name"""
+        return {
+            "access_key_id": self._read_yaml_path('aws.access_key_id', ""),
+            "secret_access_key": self._read_yaml_path('aws.secret_access_key', ""),
+            "sqs_queue_name": self._read_yaml_path('aws.sqs_queue_name', "")
+        }
     def apprise_urls(self):
         """Notification URLs for Apprise"""
         return self._read_yaml_path('apprise', [])

@@ -32,7 +32,9 @@ pyright = "*"
 types-beautifulsoup4 = "*"
 selenium = "*"
 gunicorn = "21.2.0"
-flask-api = {editable = true, ref = "bugfix/159/remove-werkzeug-deprecated-calls", git = "git+https://github.com/codders/flask-api.git"}
+flask-api = {editable = true, ref = "develop", git = "git+https://github.com/codders/flask-api.git"}
+boto3 = "*"
+boto3-stubs = {extras = ["sqs"], version = "*"}
 
 [dev-packages]
 

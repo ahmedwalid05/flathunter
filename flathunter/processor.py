@@ -10,6 +10,7 @@ from flathunter.sender_mattermost import SenderMattermost
 from flathunter.sender_apprise import SenderApprise
 from flathunter.sender_telegram import SenderTelegram
 from flathunter.sender_slack import SenderSlack
+from flathunter.sender_sqs import SenderSQS
 from flathunter.gmaps_duration_processor import GMapsDurationProcessor
 from flathunter.idmaintainer import SaveAllExposesProcessor
 from flathunter.abstract_processor import Processor
@@ -33,6 +34,8 @@ class ProcessorChainBuilder:
             self.processors.append(SenderApprise(self.config))
         if 'slack' in notifiers:
             self.processors.append(SenderSlack(self.config))
+        if 'sqs' in notifiers:
+            self.processors.append(SenderSQS(self.config))
         return self
 
     def resolve_addresses(self):

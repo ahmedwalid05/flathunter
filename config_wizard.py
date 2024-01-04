@@ -32,6 +32,7 @@ class Notifier(Enum):
     MATTERMOST = "mattermost"
     APPRISE = "apprise"
     SLACK = "slack"
+    SQS="sqs"
 
 def welcome():
     """Display the welcome dialog"""
@@ -201,6 +202,22 @@ def configure_slack(config: YamlConfig) -> Dict[str, Any]:
             "webhook_url": webhook_url
         }
     }
+def configure_sqs(config: YamlConfig) -> Dict[str, Any]:
+    """Ask the user for sqs details"""
+    clear()
+    aws_config= config.sqs_details()
+    access_key_id = prompt_with_default("access key ID: ", aws_config["access_key_id"])
+    secret_access_key = prompt_with_default("secret access key: ", aws_config["secret_access_key"])
+    sqs_queue_name = prompt_with_default("SQS queue name: ", aws_config["sqs_queue_name"])
+
+    return {
+        Notifier.SQS.value: {
+            "access_key_id": access_key_id,
+            "secret_access_key": secret_access_key,
+            "sqs_queue_name": sqs_queue_name
+        }
+    }
+    
 
 def configure_notifier(notifier: str, config) -> Dict[str, Any]:
     """Configure the selected / active notifier"""
@@ -212,6 +229,9 @@ def configure_notifier(notifier: str, config) -> Dict[str, Any]:
         return configure_apprise(config)
     if notifier == Notifier.SLACK.value:
         return configure_slack(config)
+    if notifier == Notifier.SQS.value:
+        return configure_slack(config)
+    
     raise ConfigurationError("Invalid Notifier Selection")
 
 def configure_captcha(urls: List[str], config: YamlConfig) -> Optional[Dict[str, Any]]:
