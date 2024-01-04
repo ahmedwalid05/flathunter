@@ -18,7 +18,8 @@ class SenderSQS(Processor, Notifier):
         self.sqs = boto3.client(
             "sqs",
             aws_access_key_id=sqs_config["access_key_id"],
-            aws_secret_access_key=sqs_config["secret_access_key"],            
+            aws_secret_access_key=sqs_config["secret_access_key"],
+            region_name='us-east-1'           
             )
         self.queue_url = sqs_config["sqs_queue_name"]
         logger.info("SQS started")
