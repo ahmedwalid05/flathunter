@@ -15,7 +15,7 @@ Use this bot to help with your flatsearch - it's a much better use of your time 
 
 ## If you are not a Python developer / power-user
 
-Setting up this project on your local machine can be a bit complicated if you have no experience with Python. This `README` is detailed, and there is a configuration wizard, but it's not super user-friendly. If you are searching for properties in Berlin, you can use the hosted version at https://flathunter.codders.io . You can login there with your Telegram ID and setup a basic search without downloading the project.
+Setting up this project on your local machine can be a bit complicated if you have no experience with Python. This `README` is detailed, and there is a configuration wizard, but it's not super user-friendly. If you are searching for properties in Berlin, you can use the hosted version at https://flathunter.codders.de . You can login there with your Telegram ID and setup a basic search without downloading the project.
 
 ## Description
 
@@ -32,7 +32,7 @@ Currently available messaging services are [Telegram](https://telegram.org/), [M
   - [Configuration](#configuration)
     - [URLs](#urls)
     - [Telegram](#telegram)
-    - [2Captcha](#2captcha)
+    - [Capmonster](#capmonster)
     - [Proxy](#proxy)
     - [Google API](#google-api)
   - [Command-line Interface](#command-line-interface)
@@ -47,7 +47,7 @@ Currently available messaging services are [Telegram](https://telegram.org/), [M
 
 ## Background
 
-There are at least four different rental property marketplace sites that are widely used in Germany - [ImmoScout24](https://www.immobilienscout24.de/), [Immowelt](https://www.immowelt.de/), [WG-Gesucht](https://www.wg-gesucht.de/) and [eBay Kleinanzeigen](https://www.kleinanzeigen.de/). Most people end up searching through listings on all four sites on an almost daily basis during their rental search.
+There are at least four different rental property marketplace sites that are widely used in Germany - [ImmoScout24](https://www.immobilienscout24.de/), [Immowelt](https://www.immowelt.de/), [WG-Gesucht](https://www.wg-gesucht.de/) and [Kleinanzeigen](https://www.kleinanzeigen.de/). Most people end up searching through listings on all four sites on an almost daily basis during their rental search.
 In Italy on the other hand, [idealista](https://www.idealista.it), [Subito](https://www.subito.it) and [Immobiliare.it](https://www.immobiliare.it) are very common for real-estate hunting.
 
 With ```Flathunter```, instead of visiting the same pages on the same  sites every day, you can set the system up to scan every site, filtering by your search criteria, and notify you when new rental property becomes available that meets your criteria.
@@ -55,7 +55,7 @@ With ```Flathunter```, instead of visiting the same pages on the same  sites eve
 ## Prerequisites
 * [Python 3.10+](https://www.python.org/)
 * [pipenv](https://pipenv.pypa.io/en/latest/)
-* [Chromium](https://www.chromium.org/) / [Google Chrome](https://www.google.com/chrome/) (*optional to scan ads on immobilienscout24.de and Kleinanzeigen*)
+* [Chromium](https://www.chromium.org/) / [Google Chrome](https://www.google.com/chrome/) (*optional to scan ads on immobilienscout24.de, and Kleinanzeigen)
 * [Docker]() (*optional*)
 * [GCloud CLI]() (*optional*)
 
@@ -146,8 +146,8 @@ $ python config_wizard.py
 
 To configure the searches, simply visit the property portal of your choice (e.g. ImmoScout24), configure the search on the website to match your search criteria, then copy the URL of the results page into the config file. You can add as many URLs as you like, also multiple from the same website if you have multiple different criteria (e.g. running the same search in different areas).
 
- * Currently, eBay Kleinanzeigen, Immowelt, WG-Gesucht and Idealista only crawl the first page, so make sure to **sort by newest offers**.
- * Your links should point to the German version of the websites (in the case of eBay Kleinanzeigen, Immowelt, ImmoScout24 and WG-Gesucht), since it is tested only there. Otherwise you might have problems.
+ * Currently, Kleinanzeigen, Immowelt, WG-Gesucht and Idealista only crawl the first page, so make sure to **sort by newest offers**.
+ * Your links should point to the German version of the websites (in the case of Kleinanzeigen, Immowelt, ImmoScout24 and WG-Gesucht), since it is tested only there. Otherwise you might have problems.
  * For Idealista, the link should point to the Italian version of the website, for the same reason reported above.
  * For Immobiliare, the link should point to the Italian version of the website, for the same reasons reported above.
  * For Subito, the link should point to the Italian version of the website, for the same reasons reported above.
@@ -170,7 +170,12 @@ Some sites (including Kleinanzeigen and ImmoScout24) implement bot detection to 
 
 #### Captchas
 
-Some sites (including ImmoScout24) implement a Captcha to avoid being crawled by evil web scrapers. Since our crawler is not an evil one, the people at [2Captcha](https://2captcha.com) and [Imagetyperz](https://imagetyperz.com/) provide services that help you solve them. You can head over to one of those services and buy some credit for captcha solving. You will need to install the API key for your captcha-solving account in the `config.yaml`. Check out `config.yaml.dist` to see how to configure `2Captcha` or `Imagetyperz` with Flathunter. **At this time, ImmoScout24 can not be crawled by Flathunter without using 2Captcha/Imagetyperz. Buying captcha solutions does not guarantee that you will get past the ImmoScout24 bot detection (see [#296](https://github.com/flathunters/flathunter/issues/296), [#302](https://github.com/flathunters/flathunter/issues/302))**.
+Some sites (including ImmoScout24) implement a Captcha to avoid being crawled by evil web scrapers. Since our crawler is not an evil one, the people at [2Captcha](https://2captcha.com), [Imagetyperz](https://imagetyperz.com/) and [Capmonster](https://capmonster.cloud/) provide services that help you solve them. You can head over to one of those services and buy some credit for captcha solving. You will need to install the API key for your captcha-solving account in the `config.yaml`. Check out `config.yaml.dist` to see how to configure `2Captcha`, `Imagetyperz` or `Capmonster` with Flathunter. **At this time, ImmoScout24 can not be crawled by Flathunter without using Capmonster. Buying captcha solutions does not guarantee that you will get past the ImmoScout24 bot detection (see [#296](https://github.com/flathunters/flathunter/issues/296), [#302](https://github.com/flathunters/flathunter/issues/302))**.
+
+#### Capmonster
+
+Currently, [Capmonster](https://capmonster.cloud/) is the only implemented captcha-solving service that solves the captchas on ImmoScout24. You will need to set
+the `FLATHUNTER_CAPMONSTER_KEY` environment variable or add the key to your `config.yaml` to solve the captchas.
 
 #### ImmoScout24 Cookie Override
 
@@ -239,13 +244,13 @@ You can either use just Docker or Docker Compose to run the app containerized. W
 2. To build the image, run inside the project's root directory:
 
 ```sh
-docker-compose build
+docker compose build
 ```
 
 3. To run the docker container, run inside the project's root directory:
 
 ```sh
-docker-compose up
+docker compose up
 ```
 
 #### With plain Docker
@@ -281,6 +286,7 @@ To make deployment with docker easier, most of the important configuration optio
  - FLATHUNTER_WEBSITE_DOMAIN - the public domain of the flathunter website deployment
  - FLATHUNTER_2CAPTCHA_KEY - the API key for 2captcha
  - FLATHUNTER_IMAGETYPERZ_TOKEN - the API token for ImageTyperz
+ - FLATHUNTER_IS24_COOKIE - set to the value of the reese84 immoscout cookie to help with bot detection
  - FLATHUNTER_HEADLESS_BROWSER - set to any value to configure Google Chrome to be launched in headless mode (necessary for Docker installations)
  - FLATHUNTER_FILTER_EXCLUDED_TITLES - a semicolon-separated list of words to filter out from matches
  - FLATHUNTER_FILTER_MIN_PRICE - the minimum price (integer euros)

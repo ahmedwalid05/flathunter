@@ -1,18 +1,14 @@
-"""Expose crawler for Ebay Kleinanzeigen"""
+"""Expose crawler for Kleinanzeigen"""
 import re
 import datetime
-from typing import Optional
 
 from bs4 import Tag
-from selenium.webdriver import Chrome
 
-from flathunter.abstract_crawler import Crawler
-from flathunter.chrome_wrapper import get_chrome_driver
-from flathunter.exceptions import DriverLoadException
+from flathunter.webdriver_crawler import WebdriverCrawler
 from flathunter.logging import logger
 
-class Kleinanzeigen(Crawler):
-    """Implementation of Crawler interface for Ebay Kleinanzeigen"""
+class Kleinanzeigen(WebdriverCrawler):
+    """Implementation of Crawler interface for Kleinanzeigen"""
 
     URL_PATTERN = re.compile(r'https://www\.kleinanzeigen\.de')
     MONTHS = {
@@ -29,31 +25,6 @@ class Kleinanzeigen(Crawler):
         "November": "11",
         "Dezember": "12"
     }
-
-    def __init__(self, config):
-        super().__init__(config)
-        self.config = config
-        self.driver = None
-
-
-    def get_driver(self) -> Optional[Chrome]:
-        """Lazy method to fetch the driver as required at runtime"""
-        if self.driver is not None:
-            return self.driver
-        driver_arguments = self.config.captcha_driver_arguments()
-        self.driver = get_chrome_driver(driver_arguments)
-        return self.driver
-
-    def get_driver_force(self) -> Chrome:
-        """Fetch the driver, and throw an exception if it is not configured or available"""
-        res = self.get_driver()
-        if res is None:
-            raise DriverLoadException("Unable to load chrome driver when expected")
-        return res
-
-    def get_page(self, search_url, driver=None, page_no=None):
-        """Applies a page number to a formatted search URL and fetches the exposes at that page"""
-        return self.get_soup_from_url(search_url, driver=self.get_driver())
 
     def get_expose_details(self, expose):
         soup = self.get_page(expose['url'], self.get_driver())
@@ -72,21 +43,22 @@ class Kleinanzeigen(Crawler):
         entries = []
         soup = soup.find(id="srchrslt-adtable")
 
-        try:
-            title_elements = soup.find_all(lambda e: e.has_attr('class')
-                                           and 'ellipsis' in e['class'])
-        except AttributeError:
-            return entries
+        exposes = soup.find_all("article", class_="aditem")
+        for  expose in exposes:
 
-        expose_ids = soup.find_all("article", class_="aditem")
+            title_elem = expose.find(class_="ellipsis")
+            if title_elem.get("href"):
+                url = title_elem.get("href")
+            else:
+                # If there is no title element, just continue since we can't provide an URL
+                continue
 
-        for idx, title_el in enumerate(title_elements):
             try:
-                price = expose_ids[idx].find(
+                price = expose.find(
                     class_="aditem-main--middle--price-shipping--price").text.strip()
-                tags = expose_ids[idx].find_all(class_="simpletag")
-                address = expose_ids[idx].find("div", {"class": "aditem-main--top--left"})
-                image_element = expose_ids[idx].find("div", {"class": "galleryimage-element"})
+                tags = expose.find_all(class_="simpletag")
+                address = expose.find("div", {"class": "aditem-main--top--left"})
+                image_element = expose.find("div", {"class": "galleryimage-element"})
             except AttributeError as error:
                 logger.warning("Unable to process eBay expose: %s", str(error))
                 continue
@@ -102,19 +74,20 @@ class Kleinanzeigen(Crawler):
 
             rooms = ""
             if len(tags) > 1:
-                rooms_match = re.match(r'(\d+)', tags[1].text)
+                rooms_match = re.search(r'\d+[.|,]*\d*', tags[1].text, flags=re.MULTILINE)
                 if rooms_match is not None:
-                    rooms = rooms_match[1]
+                    rooms = rooms_match.group()
 
             try:
-                size = tags[0].text
+                size = tags[0].text.strip()
             except (IndexError, TypeError):
                 size = ""
+
             details = {
-                'id': int(expose_ids[idx].get("data-adid")),
+                'id': int(expose.get("data-adid")),
                 'image': image,
-                'url': ("https://www.kleinanzeigen.de" + title_el.get("href")),
-                'title': title_el.text.strip(),
+                'url': ("https://www.kleinanzeigen.de" + url),
+                'title': title_elem.text.strip(),
                 'price': price,
                 'size': size,
                 'rooms': rooms,

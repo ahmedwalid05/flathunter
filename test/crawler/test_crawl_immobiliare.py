@@ -24,4 +24,6 @@ class ImmobiliareCrawlerTest(unittest.TestCase):
         self.assertTrue(entries[0]['url'].startswith(
             "https://www.immobiliare.it/annunci/"), u"URL should be an apartment link")
         for attr in ['title', 'price', 'size', 'rooms', 'address', 'image']:
-            self.assertIsNotNone(entries[0][attr], attr + " should be set")
+            self.assertIsNotNone(
+                entries[0][attr], attr + " should be set (" + entries[0]['url'] + ")"
+            )

@@ -5,6 +5,7 @@ import requests_mock
 import re
 
 from flathunter.crawler.immobilienscout import Immobilienscout
+from flathunter.captcha.twocaptcha_solver import TwoCaptchaSolver
 from flathunter.captcha.captcha_solver import CaptchaBalanceEmpty
 from test.utils.config import StringConfigWithCaptchas
 
@@ -55,9 +56,11 @@ def test_process_expose_fetches_details(crawler):
         for attr in [ 'title', 'price', 'size', 'rooms', 'address', 'from' ]:
             assert expose[attr] is not None
 
-def test_captcha_error_no_balance(crawler):
+def test_twocaptcha_error_no_balance(crawler):
     if not test_config.captcha_enabled():
         pytest.skip("Captcha solving is not enabled - skipping immoscout tests. Setup captcha solving")
+    if not isinstance(test_config.get_captcha_solver(), TwoCaptchaSolver):
+        pytest.skip("Captcha solver is not 2captcha - skipping 2captcha balance check")
     with requests_mock.mock() as m:
         with open(os.path.join(os.path.dirname(os.path.realpath(__file__)), "fixtures", "immo-scout-IS24-response.html")) as fixture:
             immo_scout_matcher = re.compile('www.immobilienscout24.de')

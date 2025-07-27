@@ -27,7 +27,7 @@ class HunterTest(unittest.TestCase):
 
     DUMMY_CONFIG = """
 urls:
-  - https://www.immowelt.de/liste/berlin/wohnungen/mieten?roomi=2&prima=1500&wflmi=70&sort=createdate%2Bdesc
+  - https://www.immowelt.de/classified-search?distributionTypes=Rent&estateTypes=House,Apartment&locations=AD08DE8634&order=Default&m=homepage_new_search_classified_search_result
 
 google_maps_api:
   key: SOME_KEY

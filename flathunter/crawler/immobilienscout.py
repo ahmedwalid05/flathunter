@@ -4,13 +4,14 @@ import datetime
 import re
 
 from bs4 import BeautifulSoup, Tag
-from jsonpath_ng import parse
+from jsonpath_ng.ext import parse
 from selenium.common.exceptions import JavascriptException
 from selenium.webdriver import Chrome
 
 from flathunter.abstract_crawler import Crawler
 from flathunter.logging import logger
 from flathunter.chrome_wrapper import get_chrome_driver
+from flathunter.captcha.twocaptcha_solver import TwoCaptchaSolver
 from flathunter.exceptions import DriverLoadException
 
 STATIC_URL_PATTERN = re.compile(r'https://www\.immobilienscout24\.de')
@@ -35,7 +36,9 @@ class Immobilienscout(Crawler):
     URL_PATTERN = STATIC_URL_PATTERN
 
     JSON_PATH_PARSER_ENTRIES = parse("$..['resultlist.realEstate']")
-    JSON_PATH_PARSER_IMAGES = parse("$..galleryAttachments..['@href']")
+    JSON_PATH_PARSER_IMAGES = parse("$..galleryAttachments"
+                                    "..attachment[?'@xsi.type'=='common:Picture']"
+                                    "..['@href'].`sub(/(.*\\\\.jpe?g).*/, \\\\1)`")
 
     RESULT_LIMIT = 50
 
@@ -49,7 +52,7 @@ class Immobilienscout(Crawler):
         self.driver = None
         self.checkbox = False
         self.afterlogin_string = None
-        if "immoscout_cookie" in self.config:
+        if self.config.immoscout_cookie() is not None:
             self.set_cookie()
         if config.captcha_enabled():
             self.checkbox = config.get_captcha_checkbox()
@@ -122,15 +125,18 @@ class Immobilienscout(Crawler):
                 logger.error(
                     "IS24 bot detection has identified our script as a bot - we've been blocked"
                 )
+                logger.debug(self.get_driver_force().page_source)
             return []
         return self.get_entries_from_json(result_json)
 
     def get_entries_from_json(self, json):
         """Get entries from JSON"""
-        return [
+        entries = [
             self.extract_entry_from_javascript(entry.value)
                 for entry in self.JSON_PATH_PARSER_ENTRIES.find(json)
         ]
+        logger.debug('Number of found entries: %d', len(entries))
+        return entries
 
     def extract_entry_from_javascript(self, entry):
         """Get single entry from JavaScript"""
@@ -145,10 +151,7 @@ class Immobilienscout(Crawler):
         #
         # After: https://pictures.immobilienscout24.de/listings/$$IMAGE_ID$$.jpg
 
-        images = [
-            image.value[:image.value.find(".jpg") + 4]
-                for image in self.JSON_PATH_PARSER_IMAGES.find(entry)
-            ]
+        images = [image.value for image in self.JSON_PATH_PARSER_IMAGES.find(entry)]
 
         object_id: int = int(entry.get("@id", 0))
         return {
@@ -171,7 +174,7 @@ class Immobilienscout(Crawler):
 
     def set_cookie(self):
         """Sets request header cookie parameter to identify as a logged in user"""
-        self.HEADERS['Cookie'] = f'reese84:${self.config["immoscout_cookie"]}'
+        self.HEADERS['Cookie'] = f'reese84:${self.config.immoscout_cookie()}'
 
     def get_page(self, search_url, driver=None, page_no=None):
         """Applies a page number to a formatted search URL and fetches the exposes at that page"""
@@ -184,7 +187,13 @@ class Immobilienscout(Crawler):
 
     def get_expose_details(self, expose):
         """Loads additional details for an expose by processing the expose detail URL"""
-        soup = self.get_soup_from_url(expose['url'], driver=self.get_driver(), checkbox=self.checkbox, afterlogin_string=self.afterlogin_string)
+        if self.config.captcha_enabled():
+            # Currently (December 2024) the captcha triggers on every page request when
+            # solving with Capmonster (2captcha isn't working). It would be very expensive
+            # to solve a captcha for every single expose URL, so we skip here in the interests
+            # of saving money
+            return expose
+        soup = self.get_soup_from_url(expose['url'])
         date = soup.find('dd', {"class": "is24qa-bezugsfrei-ab"})
         expose['from'] = datetime.datetime.now().strftime("%2d.%2m.%Y")
         if date is not None:
