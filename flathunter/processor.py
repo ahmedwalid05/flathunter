@@ -6,7 +6,7 @@ from flathunter.default_processors import AddressResolver
 from flathunter.default_processors import Filter
 from flathunter.default_processors import LambdaProcessor
 from flathunter.default_processors import CrawlExposeDetails
-from flathunter.notifiers import SenderMattermost, SenderTelegram, SenderApprise, SenderSlack
+from flathunter.notifiers import SenderMattermost, SenderTelegram, SenderApprise, SenderSlack, SenderApplier
 from flathunter.sender_sqs import SenderSQS
 from flathunter.gmaps_duration_processor import GMapsDurationProcessor
 from flathunter.idmaintainer import SaveAllExposesProcessor
@@ -34,6 +34,8 @@ class ProcessorChainBuilder:
             self.processors.append(SenderSlack(self.config))
         if 'sqs' in notifiers:
             self.processors.append(SenderSQS(self.config))
+        if 'apply' in notifiers:
+            self.processors.append(SenderApplier(self.config))
         return self
 
     def resolve_addresses(self):
@@ -67,6 +69,12 @@ class ProcessorChainBuilder:
         """Add processor that applies a filter to expose sequence"""
         self.processors.append(Filter(self.config, filter_set))
         return self
+    
+    def apply_late_filter(self, filter_set):
+        """Add processor that applies a filter to expose sequence"""
+        self.processors.append(Filter(self.config, filter_set))
+        return self
+        
 
     def save_all_exposes(self, id_watch):
         """Add processor that saves all exposes to disk"""

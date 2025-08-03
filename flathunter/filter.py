@@ -3,6 +3,9 @@ from functools import reduce
 import re
 from abc import ABC, ABCMeta
 from typing import List, Any
+import re
+from typing import Iterable, Mapping, Optional
+
 
 
 class AbstractFilter(ABC):
@@ -155,6 +158,62 @@ class TitleFilter(AbstractFilter):
             return True
         return False
 
+class DistanceFilter(AbstractFilter):
+    def __init__(self, max_commute):
+        self.max_commute = max_commute
+        
+    def parse_minutes(self, s: str) -> Optional[int]:
+        """
+        Parses strings like:
+        - '24 mins (3.8 km)'
+        - '1 hour 5 mins'
+        - '2 hrs'
+        - '01:15'  (HH:MM)
+        and returns the duration in minutes.
+        """
+        s = s.lower().strip()
+
+        # HH:MM format
+        m = re.match(r'^(\d{1,2}):(\d{2})$', s)
+        if m:
+            h, mm = map(int, m.groups())
+            return h * 60 + mm
+
+        # words format
+        hours = 0
+        mins = 0
+        h_match = re.search(r'(\d+)\s*(hour|hr|hrs|h)', s)
+        m_match = re.search(r'(\d+)\s*(minute|min|mins|m)', s)
+        if h_match:
+            hours = int(h_match.group(1))
+        if m_match:
+            mins = int(m_match.group(1))
+
+        # plain "33 mins (...)" case
+        if not h_match and not m_match:
+            only_mins = re.search(r'(\d+)\s*mins?', s)
+            if only_mins:
+                mins = int(only_mins.group(1))
+            else:
+                return None
+
+        return hours * 60 + mins
+
+    def any_duration_over(self, items: Iterable[Mapping], threshold_minutes: int = 30) -> bool:
+        for it in items:
+            minutes = self.parse_minutes(it.get("duration", ""))
+            if minutes is not None and minutes > threshold_minutes:
+                return True
+        return False
+            
+    
+    def is_interesting(self, expose):
+        """True unless title matches the filtered titles"""
+        if "durations_raw" in expose:
+            all_duration_under = not self.any_duration_over(expose["durations_raw"], int(self.max_commute))
+            return all_duration_under
+        return True
+
 
 class PPSFilter(AbstractFilter):
     """Exclude exposes above a given price per square"""
@@ -194,6 +253,7 @@ class FilterBuilder:
         self._append_filter_if_not_empty(MaxSizeFilter, config.max_size())
         self._append_filter_if_not_empty(MinRoomsFilter, config.min_rooms())
         self._append_filter_if_not_empty(MaxRoomsFilter, config.max_rooms())
+        self._append_filter_if_not_empty(DistanceFilter, config.max_commute())
         self._append_filter_if_not_empty(
             PPSFilter, config.max_price_per_square())
         return self

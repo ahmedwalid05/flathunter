@@ -87,3 +87,53 @@ filters:
        config = StringConfig(string=self.FILTERS_CONFIG)
        self.assertIsNotNone(config)
        self.assertEqual(config.database_location(), os.path.abspath(os.path.dirname(os.path.abspath(__file__)) + "/.."))
+
+    def test_contact_form_config(self):
+        """Test that contact form configuration is read correctly"""
+        contact_form_config = """
+urls:
+  - https://www.immowelt.de/liste/berlin/wohnungen/mieten?roomi=2&prima=1500&wflmi=70&sort=createdate%2Bdesc
+
+contact_form:
+  firstname: "Test"
+  lastname: "User"
+  emailAddress: "test@example.com"
+  phoneNumber: "+49 123 456789"
+  address:
+    postcode: "12345"
+    houseNumber: "1"
+    street: "Test Street"
+    city: "Berlin"
+  employmentRelationship: "EMPLOYEE"
+  income: "OVER_3000"
+  numberOfPersons: "ONE_PERSON"
+  applicationPackageCompleted: true
+  hasPets: false
+  petsInHousehold: ""
+  message: "Test message"
+  sendProfile: true
+  profileImageUrl: "https://example.com/image.jpg"
+"""
+        config = StringConfig(string=contact_form_config)
+        contact_config = config.contact_form_config()
+        
+        self.assertEqual(contact_config.get("firstname"), "Test")
+        self.assertEqual(contact_config.get("lastname"), "User")
+        self.assertEqual(contact_config.get("emailAddress"), "test@example.com")
+        self.assertEqual(contact_config.get("phoneNumber"), "+49 123 456789")
+        self.assertEqual(contact_config.get("address", {}).get("postcode"), "12345")
+        self.assertEqual(contact_config.get("employmentRelationship"), "EMPLOYEE")
+        self.assertEqual(contact_config.get("income"), "OVER_3000")
+        self.assertEqual(contact_config.get("numberOfPersons"), "ONE_PERSON")
+        self.assertTrue(contact_config.get("applicationPackageCompleted"))
+        self.assertFalse(contact_config.get("hasPets"))
+        self.assertEqual(contact_config.get("petsInHousehold"), "")
+        self.assertEqual(contact_config.get("message"), "Test message")
+        self.assertTrue(contact_config.get("sendProfile"))
+        self.assertEqual(contact_config.get("profileImageUrl"), "https://example.com/image.jpg")
+
+    def test_contact_form_config_empty(self):
+        """Test that contact form configuration returns empty dict when not present"""
+        config = StringConfig(string=self.FILTERS_CONFIG)
+        contact_config = config.contact_form_config()
+        self.assertEqual(contact_config, {})

@@ -84,6 +84,26 @@ class Env:
     FLATHUNTER_FILTER_MAX_ROOMS = _read_env("FLATHUNTER_FILTER_MAX_ROOMS")
     FLATHUNTER_FILTER_MAX_PRICE_PER_SQUARE = _read_env(
         "FLATHUNTER_FILTER_MAX_PRICE_PER_SQUARE")
+    
+    # Contact form configuration
+    FLATHUNTER_CONTACT_FORM_FIRSTNAME = _read_env("FLATHUNTER_CONTACT_FORM_FIRSTNAME")
+    FLATHUNTER_CONTACT_FORM_LASTNAME = _read_env("FLATHUNTER_CONTACT_FORM_LASTNAME")
+    FLATHUNTER_CONTACT_FORM_SALUTATION = _read_env("FLATHUNTER_CONTACT_FORM_SALUTATION")
+    FLATHUNTER_CONTACT_FORM_EMAIL = _read_env("FLATHUNTER_CONTACT_FORM_EMAIL")
+    FLATHUNTER_CONTACT_FORM_PHONE = _read_env("FLATHUNTER_CONTACT_FORM_PHONE")
+    FLATHUNTER_CONTACT_FORM_POSTCODE = _read_env("FLATHUNTER_CONTACT_FORM_POSTCODE")
+    FLATHUNTER_CONTACT_FORM_HOUSE_NUMBER = _read_env("FLATHUNTER_CONTACT_FORM_HOUSE_NUMBER")
+    FLATHUNTER_CONTACT_FORM_STREET = _read_env("FLATHUNTER_CONTACT_FORM_STREET")
+    FLATHUNTER_CONTACT_FORM_CITY = _read_env("FLATHUNTER_CONTACT_FORM_CITY")
+    FLATHUNTER_CONTACT_FORM_EMPLOYMENT = _read_env("FLATHUNTER_CONTACT_FORM_EMPLOYMENT")
+    FLATHUNTER_CONTACT_FORM_INCOME = _read_env("FLATHUNTER_CONTACT_FORM_INCOME")
+    FLATHUNTER_CONTACT_FORM_PERSONS = _read_env("FLATHUNTER_CONTACT_FORM_PERSONS")
+    FLATHUNTER_CONTACT_FORM_PACKAGE_COMPLETED = _read_env("FLATHUNTER_CONTACT_FORM_PACKAGE_COMPLETED")
+    FLATHUNTER_CONTACT_FORM_HAS_PETS = _read_env("FLATHUNTER_CONTACT_FORM_HAS_PETS")
+    FLATHUNTER_CONTACT_FORM_PETS_DETAILS = _read_env("FLATHUNTER_CONTACT_FORM_PETS_DETAILS")
+    FLATHUNTER_CONTACT_FORM_MESSAGE = _read_env("FLATHUNTER_CONTACT_FORM_MESSAGE")
+    FLATHUNTER_CONTACT_FORM_SEND_PROFILE = _read_env("FLATHUNTER_CONTACT_FORM_SEND_PROFILE")
+    FLATHUNTER_CONTACT_FORM_PROFILE_IMAGE = _read_env("FLATHUNTER_CONTACT_FORM_PROFILE_IMAGE")
 
 
 def elide(string):
@@ -296,6 +316,9 @@ Preis: {price}
             "apprise_notify_with_images", 'false'))
         return flag.lower() == 'true'
 
+    def immoscout_bearer_token(self) -> str:
+        return self._read_yaml_path("immoscout24.bearer_token", "")
+        
     def apprise_image_limit(self) -> Optional[int]:
         """How many images should be sent along with Apprise notifications"""
         return self._read_yaml_path('apprise_image_limit', None)
@@ -367,6 +390,9 @@ Preis: {price}
     def min_size(self):
         """Return the configured minimum size"""
         return self._get_filter_config("min_size")
+    
+    def max_commute(self):
+        return self._get_filter_config("max_commute")
 
     def max_size(self):
         """Return the configured maximum size"""
@@ -387,6 +413,61 @@ Preis: {price}
     def immoscout_cookie(self):
         """Return the precalculated immoscout cookie"""
         return self._read_yaml_path('immoscout_cookie', None)
+
+    def contact_form_config(self):  # pylint: disable=no-member
+        """Return the contact form configuration with environment variable support"""
+        # Start with YAML config
+        contact_config = self._read_yaml_path('contact_form', {})
+        
+        # Override with environment variables if present
+        if Env.FLATHUNTER_CONTACT_FORM_FIRSTNAME() is not None:  # pylint: disable=no-member
+            contact_config['firstname'] = Env.FLATHUNTER_CONTACT_FORM_FIRSTNAME()  # pylint: disable=no-member
+        if Env.FLATHUNTER_CONTACT_FORM_LASTNAME() is not None:  # pylint: disable=no-member
+            contact_config['lastname'] = Env.FLATHUNTER_CONTACT_FORM_LASTNAME()  # pylint: disable=no-member
+        if Env.FLATHUNTER_CONTACT_FORM_SALUTATION() is not None:  # pylint: disable=no-member
+            contact_config['salutation'] = Env.FLATHUNTER_CONTACT_FORM_SALUTATION()  # pylint: disable=no-member
+        if Env.FLATHUNTER_CONTACT_FORM_EMAIL() is not None:  # pylint: disable=no-member
+            contact_config['emailAddress'] = Env.FLATHUNTER_CONTACT_FORM_EMAIL()  # pylint: disable=no-member
+        if Env.FLATHUNTER_CONTACT_FORM_PHONE() is not None:  # pylint: disable=no-member
+            contact_config['phoneNumber'] = Env.FLATHUNTER_CONTACT_FORM_PHONE()  # pylint: disable=no-member
+        if Env.FLATHUNTER_CONTACT_FORM_EMPLOYMENT() is not None:  # pylint: disable=no-member
+            contact_config['employmentRelationship'] = Env.FLATHUNTER_CONTACT_FORM_EMPLOYMENT()  # pylint: disable=no-member
+        if Env.FLATHUNTER_CONTACT_FORM_INCOME() is not None:  # pylint: disable=no-member
+            contact_config['income'] = Env.FLATHUNTER_CONTACT_FORM_INCOME()  # pylint: disable=no-member
+        if Env.FLATHUNTER_CONTACT_FORM_PERSONS() is not None:  # pylint: disable=no-member
+            contact_config['numberOfPersons'] = Env.FLATHUNTER_CONTACT_FORM_PERSONS()  # pylint: disable=no-member
+        if Env.FLATHUNTER_CONTACT_FORM_PACKAGE_COMPLETED() is not None:  # pylint: disable=no-member
+            contact_config['applicationPackageCompleted'] = Env.FLATHUNTER_CONTACT_FORM_PACKAGE_COMPLETED().lower() == 'true'  # pylint: disable=no-member
+        if Env.FLATHUNTER_CONTACT_FORM_HAS_PETS() is not None:  # pylint: disable=no-member
+            contact_config['hasPets'] = Env.FLATHUNTER_CONTACT_FORM_HAS_PETS().lower() == 'true'  # pylint: disable=no-member
+        if Env.FLATHUNTER_CONTACT_FORM_PETS_DETAILS() is not None:  # pylint: disable=no-member
+            contact_config['petsInHousehold'] = Env.FLATHUNTER_CONTACT_FORM_PETS_DETAILS()  # pylint: disable=no-member
+        if Env.FLATHUNTER_CONTACT_FORM_MESSAGE() is not None:  # pylint: disable=no-member
+            contact_config['message'] = Env.FLATHUNTER_CONTACT_FORM_MESSAGE()  # pylint: disable=no-member
+        if Env.FLATHUNTER_CONTACT_FORM_SEND_PROFILE() is not None:  # pylint: disable=no-member
+            contact_config['sendProfile'] = Env.FLATHUNTER_CONTACT_FORM_SEND_PROFILE().lower() == 'true'  # pylint: disable=no-member
+        if Env.FLATHUNTER_CONTACT_FORM_PROFILE_IMAGE() is not None:  # pylint: disable=no-member
+            contact_config['profileImageUrl'] = Env.FLATHUNTER_CONTACT_FORM_PROFILE_IMAGE()  # pylint: disable=no-member
+        
+        # Handle address fields
+        if any([Env.FLATHUNTER_CONTACT_FORM_POSTCODE(), Env.FLATHUNTER_CONTACT_FORM_HOUSE_NUMBER(),  # pylint: disable=no-member
+                Env.FLATHUNTER_CONTACT_FORM_STREET(), Env.FLATHUNTER_CONTACT_FORM_CITY()]):  # pylint: disable=no-member
+            if 'address' not in contact_config:
+                contact_config['address'] = {}
+            if Env.FLATHUNTER_CONTACT_FORM_POSTCODE() is not None:  # pylint: disable=no-member
+                contact_config['address']['postcode'] = Env.FLATHUNTER_CONTACT_FORM_POSTCODE()  # pylint: disable=no-member
+            if Env.FLATHUNTER_CONTACT_FORM_HOUSE_NUMBER() is not None:  # pylint: disable=no-member
+                contact_config['address']['houseNumber'] = Env.FLATHUNTER_CONTACT_FORM_HOUSE_NUMBER()  # pylint: disable=no-member
+            if Env.FLATHUNTER_CONTACT_FORM_STREET() is not None:  # pylint: disable=no-member
+                contact_config['address']['street'] = Env.FLATHUNTER_CONTACT_FORM_STREET()  # pylint: disable=no-member
+            if Env.FLATHUNTER_CONTACT_FORM_CITY() is not None:  # pylint: disable=no-member
+                contact_config['address']['city'] = Env.FLATHUNTER_CONTACT_FORM_CITY()  # pylint: disable=no-member
+        
+        return contact_config
+
+    def immoscout_api_config(self):
+        """Return the ImmoScout24 API configuration"""
+        return self._read_yaml_path('immoscout_api', {})
 
     def __repr__(self):
         return json.dumps({
@@ -576,6 +657,9 @@ class Config(CaptchaEnvironmentConfig):  # pylint: disable=too-many-public-metho
         if env_size is not None:
             return int(env_size)
         return super().min_size()
+    
+    def max_commute(self):
+        return super().max_commute()
 
     def max_size(self):
         env_size = Env.FLATHUNTER_FILTER_MAX_SIZE()
@@ -603,3 +687,7 @@ class Config(CaptchaEnvironmentConfig):  # pylint: disable=too-many-public-metho
 
     def immoscout_cookie(self):
         return Env.FLATHUNTER_IS24_COOKIE() or super().immoscout_cookie()
+
+    def contact_form_config(self):
+        """Return the contact form configuration"""
+        return self._read_yaml_path('contact_form', {})

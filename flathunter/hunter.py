@@ -2,6 +2,7 @@
 import traceback
 from itertools import chain
 import requests
+import datetime
 
 from flathunter.logging import logger
 from flathunter.config import YamlConfig
@@ -38,9 +39,17 @@ class Hunter:
 
     def hunt_flats(self, max_pages: None|int = None):
         """Crawl, process and filter exposes"""
+        now = datetime.datetime.now()
+
+        logger.info("Hunting at %s", now)
+
         filter_set = Filter.builder() \
                            .read_config(self.config) \
                            .filter_already_seen(self.id_watch) \
+                           .build()
+                           
+        late_filter_set = Filter.builder() \
+                           .read_config(self.config) \
                            .build()
 
         processor_chain = ProcessorChain.builder(self.config) \
@@ -48,6 +57,7 @@ class Hunter:
                                         .apply_filter(filter_set) \
                                         .resolve_addresses() \
                                         .calculate_durations() \
+                                        .apply_late_filter(late_filter_set) \
                                         .add_additional_info() \
                                         .send_messages() \
                                         .build()
