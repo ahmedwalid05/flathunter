@@ -100,7 +100,7 @@ class Immobilienscout(Crawler):
 
     def get_expose_details(self, expose):
         """Loads additional details for an expose from the web page."""
-        expose_url=f"https://api.mobile.immobilienscout24.de/expose/{expose["id"]}"
+        expose_url=f"https://api.mobile.immobilienscout24.de/expose/{expose['id']}"
         
         response = requests.get(expose_url, headers=HEADERS, timeout=15)
         full_expose = extract_full_listing(response.json())

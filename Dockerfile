@@ -8,18 +8,17 @@ ARG PIP_NO_CACHE_DIR=1
 RUN apt-get -y update
 RUN apt-get install -y chromium
 
-# Upgrade pip, install pipenv
+# Upgrade pip and install pipenv
 RUN pip install --upgrade pip
 RUN pip install pipenv
 
 WORKDIR /usr/src/app
 
-# Copy files that list dependencies
-COPY Pipfile.lock Pipfile ./
+# Copy Pipfile and Pipfile.lock
+COPY Pipfile Pipfile.lock ./
 
-# Generate requirements.txt and install dependencies from there
-RUN pipenv requirements > requirements.txt
-RUN pip install -r requirements.txt
+# Install dependencies using pipenv
+RUN pipenv install --system --deploy --ignore-pipfile
 
 # Copy all other files, including source files
 COPY . .
